@@ -1,52 +1,169 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
 <meta charset="UTF-8">
-<title>VPN Parser</title>
+<title>ULTRA VPN PARSER v5 PRO</title>
+
 <style>
-body { font-family: Arial; padding: 20px; background:#111; color:#fff; }
-input, button { width: 100%; padding: 12px; margin-top: 10px; }
-button { background:#4CAF50; color:white; border:none; }
-pre { background:#222; padding:10px; white-space:pre-wrap; }
+body {
+font-family: Arial;
+background: #0d0d0d;
+color: white;
+margin: 0;
+}
+
+header {
+padding: 15px;
+text-align: center;
+background: #111;
+font-size: 18px;
+font-weight: bold;
+}
+
+.container {
+padding: 15px;
+}
+
+input, button, select {
+width: 100%;
+padding: 12px;
+margin-top: 10px;
+border-radius: 8px;
+border: none;
+}
+
+button {
+background: #4CAF50;
+color: white;
+font-weight: bold;
+}
+
+pre {
+background: #1e1e1e;
+padding: 10px;
+border-radius: 8px;
+white-space: pre-wrap;
+max-height: 400px;
+overflow: auto;
+}
+
+.tab {
+margin-top: 10px;
+padding: 10px;
+background: #1a1a1a;
+border-radius: 8px;
+}
 </style>
+
 </head>
+
 <body>
 
-<h2>VPN PARSER</h2>
+<header>🔥 ULTRA VPN PARSER v5 PRO</header>
 
-<input id="url" placeholder="Вставь ссылку подписки">
-<button onclick="parse()">Парсить</button>
+<div class="container">
 
-<pre id="out"></pre>
+<input id="url" placeholder="Вставь подписку">
+
+<select id="filter">
+<option value="ALL">ALL</option>
+<option value="VLESS">VLESS</option>
+<option value="VMESS">VMESS</option>
+<option value="TROJAN">TROJAN</option>
+<option value="SS">SS</option>
+</select>
+
+<button onclick="parse()">🚀 PARSE</button>
+
+<pre id="out">Результат...</pre>
+
+</div>
 
 <script>
-async function parse() {
-    let url = document.getElementById("url").value;
 
-    let res = await fetch(url);
-    let text = await res.text();
+let result = [];
+let finalResult = [];
 
-    try { text = atob(text); } catch(e) {}
-
-    let lines = text.split("\n");
-
-    let result = [];
-    let i = 1;
-
-    for (let line of lines) {
-        if (
-            line.includes("vless://") ||
-            line.includes("vmess://") ||
-            line.includes("trojan://") ||
-            line.includes("ss://")
-        ) {
-            result.push("NODE " + i + " - " + line);
-            i++;
-        }
-    }
-
-    document.getElementById("out").innerText = result.join("\n");
+function clean(line) {
+return line
+.replace(/\|.*XpaVPN.*$/g, "")
+.replace(/#\d+/g, "")
+.trim();
 }
+
+function type(line) {
+if (line.includes("vless://")) return "VLESS";
+if (line.includes("vmess://")) return "VMESS";
+if (line.includes("trojan://")) return "TROJAN";
+if (line.includes("ss://")) return "SS";
+return "UNKNOWN";
+}
+
+async function checkServer(url) {
+
+try {
+let r = await fetch("YOUR_WORKER_URL/?url=" + encodeURIComponent(url));
+return await r.json();
+} catch(e) {
+return {status:"DEAD", ping:-1};
+}
+
+}
+
+async function parse() {
+
+let url = document.getElementById("url").value;
+let filter = document.getElementById("filter").value;
+
+let res = await fetch(url);
+let text = await res.text();
+
+try { text = atob(text); } catch(e) {}
+
+let lines = text.split("\n");
+
+result = [];
+finalResult = [];
+
+for (let line of lines) {
+
+line = clean(line);
+if (!line.includes("://")) continue;
+
+let t = type(line);
+
+if (filter !== "ALL" && filter !== t) continue;
+
+result.push({link: line, type: t});
+}
+
+for (let item of result) {
+
+let check = await checkServer(item.link);
+
+finalResult.push({
+link: item.link,
+type: item.type,
+status: check.status,
+ping: check.ping
+});
+
+}
+
+render();
+
+}
+
+function render() {
+
+document.getElementById("out").innerText =
+finalResult.map(x =>
+`NODE | ${x.type} | ${x.status} | ${x.ping}ms\n${x.link}`
+).join("\n\n");
+
+}
+
 </script>
 
 </body>
