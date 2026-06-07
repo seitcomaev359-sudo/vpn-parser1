@@ -2,97 +2,196 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>VPN PARSER ULTRA</title>
+<title>VPN PARSER ULTRA PRO MAX</title>
 
 <style>
 body{
-background:#0b0f14;
-color:white;
+margin:0;
 font-family:Arial;
-padding:20px;
+background:#0b0f14;
+color:#fff;
 }
 
-button{
-width:100%;
+.header{
 padding:15px;
-margin-top:10px;
-background:#00c853;
-border:none;
+font-size:18px;
 font-weight:bold;
-border-radius:10px;
+background:#111826;
+text-align:center;
 }
 
 textarea{
-width:100%;
-height:200px;
-background:#1a1f27;
-color:white;
+width:95%;
+height:160px;
+margin:10px;
+background:#151c26;
+color:#fff;
 border:none;
 padding:10px;
 border-radius:10px;
 }
 
-.card{
-background:#121821;
-padding:10px;
-margin-top:10px;
-border-radius:10px;
-word-break:break-all;
+.btn{
+width:95%;
+margin:10px;
+padding:15px;
+border:none;
+border-radius:12px;
+font-size:16px;
+font-weight:bold;
+background:#00c853;
+color:#000;
+cursor:pointer;
 }
 
-.fast{border-left:5px solid #00e676;}
-.slow{border-left:5px solid orange;}
+.tabs{
+display:flex;
+justify-content:space-around;
+margin:10px;
+}
+
+.tab{
+flex:1;
+padding:10px;
+margin:2px;
+text-align:center;
+background:#1a2230;
+border-radius:8px;
+cursor:pointer;
+}
+
+.tab.active{
+background:#00c853;
+color:#000;
+}
+
+.card{
+background:#121a24;
+margin:10px;
+padding:10px;
+border-radius:10px;
+word-break:break-all;
+border-left:4px solid #444;
+}
+
+.fast{border-left-color:#00e676;}
+.slow{border-left-color:orange;}
+.dead{border-left-color:red;}
+
+small{color:#aaa;}
+
 </style>
 </head>
 
 <body>
 
-<h2>🚀 VPN PARSER ULTRA v2</h2>
+<div class="header">🚀 VPN PARSER ULTRA PRO MAX</div>
 
 <textarea id="input" placeholder="вставь конфиги сюда"></textarea>
 
-<button onclick="parse()">PARSE</button>
+<button class="btn" onclick="parse()">PARSE</button>
+
+<div class="tabs">
+<div class="tab active" onclick="setTab('all')">ALL</div>
+<div class="tab" onclick="setTab('live')">LIVE</div>
+<div class="tab" onclick="setTab('slow')">SLOW</div>
+<div class="tab" onclick="downloadLive()">⬇ DOWNLOAD</div>
+</div>
 
 <div id="out"></div>
 
 <script>
 
+let DATA = [];
+let CURRENT_TAB = "all";
+
+function clean(line){
+return line
+.replace(/NODE.*?\n/g,'')
+.replace(/#.*$/g,'')
+.replace(/\|.*?\|/g,'')
+.trim();
+}
+
+function typeOf(l){
+if(l.includes("vless://")) return "VLESS";
+if(l.includes("trojan://")) return "TROJAN";
+if(l.includes("vmess://")) return "VMESS";
+return "UNKNOWN";
+}
+
 function fakePing(){
 return Math.floor(Math.random()*200)+20;
 }
 
-function getType(l){
-if(l.includes("vless")) return "VLESS";
-if(l.includes("trojan")) return "TROJAN";
-return "UNKNOWN";
-}
-
 function parse(){
 
-let lines = document.getElementById("input").value.split("\n");
+DATA = [];
 
-let out = "";
+let lines = document.getElementById("input").value.split("\n");
 
 lines.forEach(l=>{
 
 if(!l.includes("://")) return;
 
+let link = clean(l);
 let ping = fakePing();
-let type = getType(l);
+let type = typeOf(link);
 
-let cls = ping < 80 ? "fast" : "slow";
+let status = ping < 70 ? "fast" : ping < 140 ? "slow" : "dead";
+
+DATA.push({link,ping,type,status});
+
+});
+
+render();
+
+}
+
+function setTab(t){
+CURRENT_TAB = t;
+
+document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+event.target.classList.add("active");
+
+render();
+}
+
+function render(){
+
+let out = "";
+
+DATA.forEach(d=>{
+
+if(CURRENT_TAB==="live" && d.status!=="fast") return;
+if(CURRENT_TAB==="slow" && d.status!=="slow") return;
 
 out += `
-<div class="card ${cls}">
-<b>${type}</b><br>
-⚡ Ping: ${ping} ms<br>
-<small>${l}</small>
+<div class="card ${d.status}">
+<b>${d.type}</b><br>
+⚡ Ping: ${d.ping} ms<br>
+<small>${d.link}</small>
 </div>
 `;
 
 });
 
 document.getElementById("out").innerHTML = out;
+
+}
+
+function downloadLive(){
+
+let txt = DATA
+.filter(d=>d.status==="fast")
+.map(d=>d.link)
+.join("\n");
+
+let blob = new Blob([txt],{type:"text/plain"});
+let a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+a.download = "live_vpn.txt";
+a.click();
 
 }
 
