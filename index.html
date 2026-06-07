@@ -2,216 +2,28 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>ULTRA v8 AI VPN FULL</title>
-
-<style>
-body{
-margin:0;
-font-family:Arial;
-background:#0b0f14;
-color:white;
-}
-
-header{
-padding:18px;
-text-align:center;
-font-weight:bold;
-background:linear-gradient(90deg,#00c853,#00b0ff);
-font-size:20px;
-}
-
-.container{ padding:16px; }
-
-input{
-width:100%;
-padding:14px;
-margin-top:10px;
-border-radius:10px;
-border:none;
-background:#1a1f27;
-color:white;
-}
-
-button{
-width:100%;
-padding:14px;
-margin-top:10px;
-border:none;
-border-radius:12px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.btn{
-background:linear-gradient(90deg,#00c853,#00e676);
-color:black;
-}
-
-.card{
-background:#121821;
-padding:12px;
-margin-top:10px;
-border-radius:12px;
-word-break:break-all;
-}
-
-.best{
-border:2px solid #00e676;
-box-shadow:0 0 15px #00e67655;
-}
-
-.small{ color:#aaa; font-size:12px; }
-</style>
+<title>VPN Parser</title>
 </head>
-
 <body>
 
-<header>🚀 ULTRA v8 AI VPN ENGINE FULL</header>
+<h2>VPN PARSER WORKING</h2>
 
-<div class="container">
+<textarea id="input" style="width:100%;height:200px;"></textarea>
 
-<input id="url" placeholder="🔗 подписка">
+<br><br>
 
-<button class="btn" onclick="parse()">⚡ PARSE + AI ANALYZE</button>
-
-<button onclick="autoSelect()">🏆 AUTO BEST</button>
-<button onclick="sortPing()">📶 SORT BY PING</button>
-<button onclick="downloadWorking()">📥 СКАЧАТЬ РАБОЧИЕ</button>
+<button onclick="parse()">PARSE</button>
 
 <div id="out"></div>
 
-</div>
-
 <script>
-
-let data = [];
-
-/* CLEAN */
-function clean(l){
-return l.replace(/#.*$/g,"").trim();
-}
-
-/* TYPE */
-function type(l){
-if(l.includes("vless://")) return "VLESS";
-if(l.includes("trojan://")) return "TROJAN";
-if(l.includes("vmess://")) return "VMESS";
-return "UNKNOWN";
-}
-
-/* AI PING */
-function aiPing(link){
-
-let base = Math.floor(Math.random()*180)+20;
-
-if(link.includes("cloudflare")) base -= 40;
-if(link.includes("google")) base -= 25;
-if(link.includes("ru")) base += 10;
-if(link.includes("de")) base -= 10;
-
-return Math.max(10, base);
-}
-
-/* PARSE */
-async function parse(){
-
-let url = document.getElementById("url").value;
-
-let res = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url));
-let text = await res.text();
-
+function parse(){
+let text = document.getElementById("input").value;
 let lines = text.split("\n");
 
-data = [];
-
-for(let l of lines){
-
-if(!l.includes("://")) continue;
-
-l = clean(l);
-
-let t = type(l);
-let ping = aiPing(l);
-
-data.push({
-type:t,
-link:l,
-ping:ping
-});
-
-}
-
-render();
-
-}
-
-/* RENDER */
-function render(){
-
-let sorted = [...data].sort((a,b)=>a.ping-b.ping);
-
 document.getElementById("out").innerHTML =
-sorted.map((x,i)=>`
-
-<div class="card ${i===0?'best':''}">
-<b>${x.type}</b><br>
-⚡ PING: ${x.ping} ms<br>
-<div class="small">${x.ping<80?'🟢 FAST':'🟡 SLOW'}</div>
-<code>${x.link}</code>
-</div>
-
-`).join("");
-
+lines.map(l => `<div>${l}</div>`).join("");
 }
-
-/* SORT */
-function sortPing(){
-data.sort((a,b)=>a.ping-b.ping);
-render();
-}
-
-/* AUTO BEST */
-function autoSelect(){
-
-let best = [...data].sort((a,b)=>a.ping-b.ping)[0];
-
-document.getElementById("out").innerHTML = `
-<div class="card best">
-🏆 AUTO BEST SERVER<br><br>
-<b>${best.type}</b><br>
-⚡ ${best.ping} ms<br>
-<div class="small">AI OPTIMIZED</div>
-<code>${best.link}</code>
-</div>
-`;
-
-}
-
-/* DOWNLOAD WORKING */
-function downloadWorking(){
-
-let working = [...data]
-.sort((a,b)=>a.ping-b.ping)
-.filter(x => x.ping < 120);
-
-let txt = working.map(x =>
-`TYPE: ${x.type}
-PING: ${x.ping} ms
-STATUS: ${x.ping < 80 ? "FAST" : "OK"}
-LINK:
-${x.link}
-------------------------`
-).join("\n");
-
-let blob = new Blob([txt], {type:"text/plain"});
-let a = document.createElement("a");
-
-a.href = URL.createObjectURL(blob);
-a.download = "WORKING_SERVERS.txt";
-a.click();
-
-}
-
 </script>
 
 </body>
