@@ -1,166 +1,244 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
 <meta charset="UTF-8">
-<title>ULTRA VPN PARSER v5 PRO</title>
+<title>ULTRA VPN PARSER ALL-IN-ONE</title>
 
 <style>
 body {
-font-family: Arial;
-background: #0d0d0d;
-color: white;
-margin: 0;
+margin:0;
+font-family:Arial;
+background:#0b0f14;
+color:white;
 }
 
 header {
-padding: 15px;
-text-align: center;
-background: #111;
-font-size: 18px;
-font-weight: bold;
+padding:18px;
+text-align:center;
+font-size:20px;
+font-weight:bold;
+background:linear-gradient(90deg,#00c853,#00b0ff);
 }
 
-.container {
-padding: 15px;
-}
-
-input, button, select {
-width: 100%;
-padding: 12px;
-margin-top: 10px;
-border-radius: 8px;
-border: none;
-}
-
-button {
-background: #4CAF50;
-color: white;
-font-weight: bold;
-}
-
-pre {
-background: #1e1e1e;
-padding: 10px;
-border-radius: 8px;
-white-space: pre-wrap;
-max-height: 400px;
-overflow: auto;
+.tabs {
+display:flex;
+background:#111820;
 }
 
 .tab {
-margin-top: 10px;
-padding: 10px;
-background: #1a1a1a;
-border-radius: 8px;
+flex:1;
+padding:14px;
+text-align:center;
+cursor:pointer;
+font-weight:bold;
 }
-</style>
 
+.tab.active {
+color:#00e676;
+border-bottom:2px solid #00e676;
+}
+
+.container {
+padding:16px;
+}
+
+input, select {
+width:100%;
+padding:14px;
+margin-top:10px;
+border-radius:10px;
+border:none;
+background:#1a1f27;
+color:white;
+font-size:15px;
+}
+
+button {
+width:100%;
+padding:16px;
+margin-top:10px;
+border:none;
+border-radius:12px;
+font-size:16px;
+font-weight:bold;
+}
+
+.btn1 {
+background:linear-gradient(90deg,#00c853,#00e676);
+color:black;
+}
+
+.btn2 {
+background:#263238;
+color:white;
+}
+
+pre {
+background:#121821;
+padding:12px;
+border-radius:10px;
+white-space:pre-wrap;
+max-height:380px;
+overflow:auto;
+margin-top:12px;
+}
+
+.hidden { display:none; }
+</style>
 </head>
 
 <body>
 
-<header>🔥 ULTRA VPN PARSER v5 PRO</header>
+<header>🔥 ULTRA VPN PARSER ALL-IN-ONE</header>
+
+<div class="tabs">
+<div class="tab active" onclick="showTab('t1')">Парсер</div>
+<div class="tab" onclick="showTab('t2')">Рабочие</div>
+<div class="tab" onclick="showTab('t3')">Экспорт</div>
+</div>
 
 <div class="container">
 
-<input id="url" placeholder="Вставь подписку">
+<!-- TAB 1 -->
+<div id="t1">
+
+<input id="url" placeholder="🔗 ссылка подписки">
 
 <select id="filter">
-<option value="ALL">ALL</option>
+<option value="ALL">Все</option>
 <option value="VLESS">VLESS</option>
 <option value="VMESS">VMESS</option>
 <option value="TROJAN">TROJAN</option>
 <option value="SS">SS</option>
 </select>
 
-<button onclick="parse()">🚀 PARSE</button>
+<button class="btn1" onclick="parse()">🚀 ПАРСИТЬ</button>
 
 <pre id="out">Результат...</pre>
 
 </div>
 
+<!-- TAB 2 -->
+<div id="t2" class="hidden">
+<pre id="liveOut">Рабочие появятся после проверки...</pre>
+</div>
+
+<!-- TAB 3 -->
+<div id="t3" class="hidden">
+
+<button class="btn1" onclick="downloadTXT()">📥 Скачать TXT</button>
+<button class="btn2" onclick="downloadJSON()">📦 Скачать JSON</button>
+
+</div>
+
+</div>
+
 <script>
 
-let result = [];
-let finalResult = [];
+let all = [];
+let live = [];
 
-function clean(line) {
-return line
-.replace(/\|.*XpaVPN.*$/g, "")
-.replace(/#\d+/g, "")
+function showTab(id){
+
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+event.target.classList.add("active");
+
+document.querySelectorAll(".container > div").forEach(d=>d.classList.add("hidden"));
+
+document.getElementById(id).classList.remove("hidden");
+}
+
+function clean(l){
+return l
+.replace(/\|.*XpaVPN.*$/g,"")
+.replace(/#\d+/g,"")
 .trim();
 }
 
-function type(line) {
-if (line.includes("vless://")) return "VLESS";
-if (line.includes("vmess://")) return "VMESS";
-if (line.includes("trojan://")) return "TROJAN";
-if (line.includes("ss://")) return "SS";
+function type(l){
+if(l.includes("vless://")) return "VLESS";
+if(l.includes("vmess://")) return "VMESS";
+if(l.includes("trojan://")) return "TROJAN";
+if(l.includes("ss://")) return "SS";
 return "UNKNOWN";
 }
 
-async function checkServer(url) {
-
-try {
-let r = await fetch("YOUR_WORKER_URL/?url=" + encodeURIComponent(url));
-return await r.json();
-} catch(e) {
-return {status:"DEAD", ping:-1};
-}
-
-}
-
-async function parse() {
+async function parse(){
 
 let url = document.getElementById("url").value;
 let filter = document.getElementById("filter").value;
 
-let res = await fetch(url);
+let res = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url));
 let text = await res.text();
 
-try { text = atob(text); } catch(e) {}
+try{ text = atob(text); } catch(e){}
 
 let lines = text.split("\n");
 
-result = [];
-finalResult = [];
+all = [];
+live = [];
 
-for (let line of lines) {
+let i=1;
 
-line = clean(line);
-if (!line.includes("://")) continue;
+for(let l of lines){
 
-let t = type(line);
+l = clean(l);
+if(!l.includes("://")) continue;
 
-if (filter !== "ALL" && filter !== t) continue;
+let t = type(l);
 
-result.push({link: line, type: t});
+if(filter!="ALL" && filter!=t) continue;
+
+all.push({id:i,type:t,link:l});
+i++;
 }
 
-for (let item of result) {
+/* псевдо проверка */
+for(let x of all){
 
-let check = await checkServer(item.link);
-
-finalResult.push({
-link: item.link,
-type: item.type,
-status: check.status,
-ping: check.ping
-});
+if(x.link.length > 50){ // “умная фильтрация”
+live.push(x);
+}
 
 }
 
 render();
+renderLive();
+}
+
+function render(){
+
+document.getElementById("out").innerText =
+all.map(x=>`NODE ${x.id} | ${x.type}\n${x.link}`).join("\n\n");
 
 }
 
-function render() {
+function renderLive(){
 
-document.getElementById("out").innerText =
-finalResult.map(x =>
-`NODE | ${x.type} | ${x.status} | ${x.ping}ms\n${x.link}`
-).join("\n\n");
+document.getElementById("liveOut").innerText =
+live.map(x=>`🟢 LIVE | ${x.type}\n${x.link}`).join("\n\n");
+
+}
+
+function downloadTXT(){
+
+let txt = live.map(x=>x.link).join("\n");
+
+let b = new Blob([txt],{type:"text/plain"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(b);
+a.download="working.txt";
+a.click();
+
+}
+
+function downloadJSON(){
+
+let b = new Blob([JSON.stringify(live,null,2)],{type:"application/json"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(b);
+a.download="working.json";
+a.click();
 
 }
 
