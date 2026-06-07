@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>VPN Parser</title>
+<style>
+body { font-family: Arial; padding: 20px; background:#111; color:#fff; }
+input, button { width: 100%; padding: 12px; margin-top: 10px; }
+button { background:#4CAF50; color:white; border:none; }
+pre { background:#222; padding:10px; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+
+<h2>VPN PARSER</h2>
+
+<input id="url" placeholder="Вставь ссылку подписки">
+<button onclick="parse()">Парсить</button>
+
+<pre id="out"></pre>
+
+<script>
+async function parse() {
+    let url = document.getElementById("url").value;
+
+    let res = await fetch(url);
+    let text = await res.text();
+
+    try { text = atob(text); } catch(e) {}
+
+    let lines = text.split("\n");
+
+    let result = [];
+    let i = 1;
+
+    for (let line of lines) {
+        if (
+            line.includes("vless://") ||
+            line.includes("vmess://") ||
+            line.includes("trojan://") ||
+            line.includes("ss://")
+        ) {
+            result.push("NODE " + i + " - " + line);
+            i++;
+        }
+    }
+
+    document.getElementById("out").innerText = result.join("\n");
+}
+</script>
+
+</body>
+</html>
